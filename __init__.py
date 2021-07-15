@@ -1,102 +1,34 @@
-from Designer.designer import save
-from Designer.designer import common_
+from Designer.common_ import qt_instance
+from Designer.menu.custom_menu import CustomMenu
 
-from functools import partial
-import weakref
-
-from PySide2 import QtWidgets as Qw
-# from PySide2 import QtCore as Qc
-#
-#
-# def on_new_graph_view_created(ui_mgr):
-#
-#     main_window = ui_mgr.getMainWindow()
-#     children = main_window.children()
-#
-#     print(main_window.findChildren(Qc.QObject, "Open..."))
-#     # for i, child in enumerate(children):
-#     #     try:
-#     #         print(i, child.text(), 123456)
-#     #     except AttributeError:
-#     #         pass
-#
-#
-#
-# def initializeSDPlugin():
-#     app = common_.get_app()
-#     ui_mgr = app.getQtForPythonUIMgr()
-#
-#     if ui_mgr:
-#         on_new_graph_view_created(ui_mgr=ui_mgr)
-#
-#
-# def uninitializeSDPlugin():
-#     app = common_.get_app()
-#     ui_mgr = app.getQtForPythonUIMgr()
-#
-#     if ui_mgr:
-#         # ui_mgr.unregisterCallback(graph_view_created_callback_id)
-#         pass
+from Designer.save_load import save, load
+from Designer.publish import publish
 
 
-class VspaTools(Qw.QToolBar):
-    __toolbar_list = {}
-
-    def __init__(self, graph_view_id, ui_mgr):
-        Qw.QToolBar.__init__(self, parent=ui_mgr.getMainWindow())
-
-        self.__graph_view_id = graph_view_id
-        self.__ui_mgr = ui_mgr
-
-        self.save_file()
-        self.publish_file()
-
-        self.__toolbar_list[graph_view_id] = weakref.ref(self)
-        self.destroyed.connect(partial(VspaTools.__on_toolbar_deleted, graph_view_id=graph_view_id))
-
-    def save_file(self):
-        action = self.addAction("Save_File")
-        action.setToolTip(self.tr("Save the graph."))
-        action.triggered.connect(save)
-
-    def publish_file(self):
-        action = self.addAction("Publish_File")
-        action.setToolTip(self.tr("Save the graph."))
-        action.triggered.connect(save)
-
-    @classmethod
-    def __on_toolbar_deleted(cls, graph_view_id):
-        del cls.__toolbar_list[graph_view_id]
-
-    @classmethod
-    def remove_all_toolbars(cls):
-        for toolbar in cls.__toolbar_list.values():
-            if toolbar():
-                toolbar().deleteLater()
+def save_action():
+    save.main()
 
 
-def on_new_graph_view_created(graph_view_id, ui_mgr):
-    toolbar = VspaTools(graph_view_id, ui_mgr)
-
-    ui_mgr.addToolbarToGraphView(graph_view_id, toolbar)
+def load_action():
+    load.main()
 
 
-graph_view_created_callback_id = 0
+def publish_action():
+    publish.save_and_publish()
+
 
 def initializeSDPlugin():
-    app = common_.get_app()
-    ui_mgr = app.getQtForPythonUIMgr()
-
-    if ui_mgr:
-        global graph_view_created_callback_id
-        graph_view = partial(on_new_graph_view_created, ui_mgr=ui_mgr)
-        graph_view_created_callback_id = ui_mgr.registerGraphViewCreatedCallback(graph_view)
+    menu()
 
 
 def uninitializeSDPlugin():
-    app = common_.get_app()
-    ui_mgr = app.getQtForPythonUIMgr()
+    pass
 
-    if ui_mgr:
-        global graph_view_created_callback_id
-        ui_mgr.unregisterCallback(graph_view_created_callback_id)
+
+def menu():
+
+    menu_ = CustomMenu(qt_instance(), "VSPA_TOOLS", "vspa.menu")
+    menu_.add_actions("Save", save_action)
+    menu_.add_actions("Load", load_action)
+    menu_.add_separator()
+    menu_.add_actions("Publish", publish_action)
